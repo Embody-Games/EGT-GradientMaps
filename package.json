@@ -1,0 +1,22 @@
+{
+  "name": "egt-gradientmaps",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Gradient Map Layer - a Blockbench plugin that colourises a value map through a saved gradient ramp as a layer that keeps following its source",
+  "author": "Embody Games",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Embody-Games/EGT-GradientMaps.git"
+  },
+  "scripts": {
+    "test": "node test/run_tests.js",
+    "build:module": "node scripts/build_module.mjs",
+    "build:check": "node scripts/build_module.mjs --check",
+    "changelog": "node scripts/changelog.mjs",
+    "release": "node scripts/release.mjs"
+  },
+  "devDependencies": {
+    "canvas": "^3.2.0"
+  }
+}

@@ -1,0 +1,21 @@
+# Changelog
+
+Generated from `changelog.json` by `scripts/changelog.mjs`. Edit that file, not this one.
+
+## v1.4.0 - Gradient Map Layer
+
+_2026-09-22_
+
+### Added
+
+- First release from this repository. The plugin already shipped inside EmbodyTools; this is the same 1.4.0, now with a home of its own so it can be installed on its own and released on its own.
+- Colourise a value or luminance map through a saved 256x16 gradient ramp, as a new layer. The greyscale stays the thing you paint and the colour is a view of it, the way an adjustment layer works.
+- The generated layer re-renders live while you paint on the layer it came from, in the same undo step as the stroke. Selecting it and reopening the dialog loads its gradient and settings again, so it can be changed in place.
+- The result is previewed on the model while the dialog is open, and cancelling puts the texture back untouched.
+- Painting on a generated layer is blocked until you confirm a warning, so it cannot be scribbled on by accident.
+- Gradients live in a library you build up. Import and export them as PNG, import Photoshop .grd packs, and group them however you like, with groups that collapse and hide.
+- Entry points in the Tools menu, the Filter menu, a texture's right-click menu and a layer's right-click menu, plus Repeat Gradient Map for applying the last one again.
+
+### Changed
+
+- Nothing about how it behaves. The library, the groups, the options and the per-layer memory are all still in localStorage under gradient_map_layer.*, and the plugin id is unchanged, so this copy and the one inside EmbodyTools share the same gradients and switching between them loses nothing.

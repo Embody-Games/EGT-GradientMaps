@@ -1,0 +1,75 @@
+name: release
+
+# Pushing a v* tag is the trigger. scripts/release.mjs creates the tag, so a
+# release stays one command.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    # The only per-repo config. Everything else is identical across the repos.
+    env:
+      PLUGIN_FILE: gradient_map_layer.js
+      PLUGIN_NAME: Gradient Map Layer
+      PLUGIN_COLOR: 5865F2
+      # No forum thread yet. discord_notify.mjs leaves thread_id off when this is
+      # empty, which posts to the channel rather than failing, so fill it in once
+      # the #addons post exists. PLUGIN_ICON_URL is optional and there is no icon yet.
+      DISCORD_THREAD_ID: ''
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      # package.json decides what "test" means in each repo, so this line never
+      # has to change when a repo gains or loses a suite.
+      - name: Run checks
+        run: npm test --if-present
+
+      - name: Tag must agree with PLUGIN_VERSION
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          plugin="$(sed -n "s/^const PLUGIN_VERSION = '\(.*\)';$/\1/p" "$PLUGIN_FILE")"
+          if [ -z "$plugin" ]; then
+            echo "could not read PLUGIN_VERSION out of $PLUGIN_FILE"
+            exit 1
+          fi
+          if [ "$tag" != "$plugin" ]; then
+            echo "tag is v$tag but $PLUGIN_FILE says $plugin"
+            exit 1
+          fi
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.version.outputs.version }}
+        run: |
+          node scripts/changelog.mjs "$V" > RELEASE_NOTES.md
+          TITLE="$(node scripts/changelog.mjs "$V" --title-only)"
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME${TITLE:+: $TITLE}" \
+            --notes-file RELEASE_NOTES.md \
+            "$PLUGIN_FILE" \
+            changelog.json
+
+      # Runs after the release exists, so the embed's link resolves. Non-fatal:
+      # a Discord outage should not mark a good release as failed.
+      - name: Announce in Discord
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          V: ${{ steps.version.outputs.version }}
+        run: node scripts/discord_notify.mjs "$V"
