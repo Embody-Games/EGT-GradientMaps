@@ -173,7 +173,8 @@ if (opts.test) {
 if (opts.dry) {
 	console.log(`\n--- dry run, nothing written ---\n${current} -> ${version} on branch ${branch}\n`);
 	console.log(`${subject}\n\n${body}\n`);
-	console.log(`would commit ${PLUGIN}, changelog.json, package.json${existsSync(join(root, 'package-lock.json')) ? ', package-lock.json' : ''}`);
+	console.log('would rebuild module/gradient_map_layer.js');
+	console.log(`would commit ${PLUGIN}, module/gradient_map_layer.js, changelog.json, package.json${existsSync(join(root, 'package-lock.json')) ? ', package-lock.json' : ''}`);
 	console.log(`would tag v${version}${opts.push ? ` and push to ${opts.remote}/${branch}` : ' (no push)'}`);
 	process.exit(0);
 }
@@ -203,6 +204,11 @@ if (existsSync(lockPath)) {
 	if (lock.packages?.['']) lock.packages[''].version = version;
 	writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
 }
+
+// The loader module carries PLUGIN_VERSION inside it, so it has to be rebuilt after
+// the bump. The suite checks the two agree, but it runs before anything is written,
+// so leaving this out ships a module one version behind and fails the next run.
+execFileSync(process.execPath, [join('scripts', 'build_module.mjs')], { cwd: root, stdio: 'inherit' });
 
 // --- commit, tag, push ----------------------------------------------------
 git(['add', '-A']);
